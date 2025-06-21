@@ -47,24 +47,36 @@ const ai = new GoogleGenAI({
 });
 
 app.post('/chat', async (req, res) => {
-  const { messages, websiteData } = req.body;
+  const { messages, websiteData, note } = req.body;
+
+  const messageHistory = messages
+    .map((msg) => `${msg.sender === "user" ? "User" : "Bot"}: ${msg.text}`)
+    .join("\n");
+
+  const contents = `
+    You are a helpful assistant for a medical clinic. Reply in short, simple sentences. Use plain text only. 
+    If you don't know something, reply with: Sorry, I'm not sure about that. Please contact the clinic.
+
+    Clinic info:
+    ${websiteData}
+
+    ${note || "Use the following previous messages to understand context:"}
+
+    ${messageHistory}
+    `;
 
   // console.log('origin', req.headers.origin);
 
 
-  // console.log('inside server.js');
+  console.log('inside server.js');
 
 
   try {
     const result = await ai.models.generateContent({
       model: 'gemini-2.0-flash', // or use 'gemini-2.0-pro' if you have access
-      contents: `You are a helpful assistant for a medical clinic. Reply in short, simple sentences. Use plain text only. If you don't know something, reply with: Sorry, I'm not sure about that. Please contact the clinic. 
-
-      Clinic info:
-      ${websiteData}
-
-      User: ${messages}`
+      contents,
     });
+    console.log('res:', result.text);
 
     res.json({ reply: result.text });
   } catch (error) {
