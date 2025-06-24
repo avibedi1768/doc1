@@ -3,6 +3,7 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const rateLimit = require('express-rate-limit');
 const { GoogleGenAI } = require('@google/genai');
+const nodemailer = require("nodemailer");
 
 require('dotenv').config();
 
@@ -84,6 +85,56 @@ app.post('/chat', async (req, res) => {
     res.status(500).json({ reply: 'Something went wrong.' });
   }
 });
+
+// api for sending emails
+app.post("/api/contact", async (req, res) => {
+  const { firstName, lastName, email, phone, service, message, owner } = req.body;
+
+  if (!firstName || !lastName || !email || !phone || !message) {
+    return res.status(400).json({ success: false, error: "Missing fields" });
+  }
+
+  const fullMessage = `
+Name: ${firstName} ${lastName}
+Email: ${email}
+Phone: ${phone}
+Service Needed: ${service}
+Message: ${message}
+  `.trim();
+
+  try {
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    // 1. Send email to owner
+    await transporter.sendMail({
+      from: `"Clinic Contact" <${process.env.EMAIL_USER}>`,
+      to: owner,
+      subject: "New Contact Form Submission",
+      text: fullMessage,
+    });
+
+    // 2. Send confirmation email to user
+    await transporter.sendMail({
+      from: `"Clinic Team" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: "Thank you for contacting us!",
+      text: `Hi ${firstName},\n\nThank you for reaching out. We have received your message and will get back to you shortly.\n\n- Clinic Team`,
+    });
+
+    res.status(200).json({ success: true, message: "Emails sent to owner and user" });
+  } catch (error) {
+    console.error("Email sending error:", error);
+    res.status(500).json({ success: false, error: "Failed to send emails" });
+  }
+});
+
+
 
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
