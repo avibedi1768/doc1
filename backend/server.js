@@ -77,11 +77,11 @@ app.post('/chat', async (req, res) => {
       model: 'gemini-2.0-flash', // or use 'gemini-2.0-pro' if you have access
       contents,
     });
-    console.log('res:', result.text);
+    // console.log('res:', result.text);
 
     res.json({ reply: result.text });
   } catch (error) {
-    console.error(error);
+    // console.error(error);
     res.status(500).json({ reply: 'Something went wrong.' });
   }
 });
@@ -129,7 +129,7 @@ Message: ${message}
 
     res.status(200).json({ success: true, message: "Emails sent to owner and user" });
   } catch (error) {
-    console.error("Email sending error:", error);
+    // console.error("Email sending error:", error);
     res.status(500).json({ success: false, error: "Failed to send emails" });
   }
 });
